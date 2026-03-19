@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Training outputs (large files)
+outputs/
+checkpoints/
+*.gguf
+*.safetensors
+*.bin
+*.pt
+*.pth
+
+# LoRA adapters
+*_lora/
+
+# HuggingFace cache
+.cache/
+
+# Database dumps (large CSV/SQL)
+dumps/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+wandb/

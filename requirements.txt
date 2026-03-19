@@ -1,0 +1,16 @@
+unsloth
+transformers==5.3.0
+trl==0.22.2
+datasets>=4.3.0
+sentencepiece
+protobuf
+huggingface_hub>=0.34.0
+hf_transfer
+accelerate
+bitsandbytes
+peft
+torch
+scikit-learn
+matplotlib
+numpy
+tqdm
