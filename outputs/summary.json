@@ -1,0 +1,11 @@
+{
+  "total_time_seconds": 13698.8,
+  "training_time_seconds": 13305.5,
+  "total_steps": 3637,
+  "final_loss": 0.5813672542572021,
+  "gpu": "NVIDIA GeForce RTX 5080 Laptop GPU",
+  "peak_memory_gb": 12.953,
+  "prompt_accuracy": 0.858,
+  "prompt_f1_macro": 0.8579,
+  "response_accuracy": 0.8805
+}

@@ -1,0 +1,23 @@
+{
+  "train_size": 30007,
+  "val_size": 1445,
+  "test_size": 1964,
+  "prompt_label_distribution": {
+    "unsafe": 17711,
+    "safe": 12296
+  },
+  "top_violated_categories": {
+    "Criminal Planning/Confessions": 7734,
+    "Needs Caution": 3804,
+    "Violence": 3047,
+    "Hate/Identity Hate": 2954,
+    "Harassment": 2758,
+    "Profanity": 2072,
+    "Sexual": 1780,
+    "Controlled/Regulated Substances": 1671,
+    "PII/Privacy": 1633,
+    "Guns and Illegal Weapons": 1142,
+    "Suicide and Self Harm": 891,
+    "Unauthorized Advice": 549
+  }
+}

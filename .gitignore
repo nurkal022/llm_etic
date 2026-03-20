@@ -12,17 +12,14 @@ venv/
 .venv/
 env/
 
-# Training outputs (large files)
-outputs/
-checkpoints/
+# Training outputs (large model files)
+outputs/checkpoints/
+outputs/qwen_aegis_safety_lora/
 *.gguf
 *.safetensors
 *.bin
 *.pt
 *.pth
-
-# LoRA adapters
-*_lora/
 
 # HuggingFace cache
 .cache/

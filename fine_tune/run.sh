@@ -26,6 +26,14 @@ EXTRA_ARGS=""
 # For quick test: EXTRA_ARGS="--max_steps 30 --eval_samples 50"
 # ----------------------------------------------------------------------------
 
+# Activate venv
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+source "${SCRIPT_DIR}/venv/bin/activate"
+
+# Set HuggingFace cache to home directory
+export HF_HOME="${HOME}/.cache/huggingface"
+export TRANSFORMERS_CACHE="${HF_HOME}/hub"
+
 # Check GPU
 echo ""
 if command -v nvidia-smi &> /dev/null; then
