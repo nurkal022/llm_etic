@@ -416,7 +416,9 @@ def main():
         )
         return {"text": text}
 
-    hf_train = HFDataset.from_list(train_convs).map(format_for_trainer)
+    hf_train = HFDataset.from_list(train_convs).map(
+        format_for_trainer, remove_columns=["messages"]
+    )
 
     # --- Trainer ---
     total_steps = args.max_steps or (
