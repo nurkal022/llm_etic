@@ -1,0 +1,13 @@
+{
+  "model": "unsloth/Qwen3.5-4B",
+  "dataset": "nvidia/Aegis-AI-Content-Safety-Dataset-2.0 (safe only)",
+  "train_samples": 4346,
+  "test_samples": 338,
+  "epochs": 1,
+  "total_steps": 540,
+  "final_loss": 0.8076365470886231,
+  "train_time_min": 29.0,
+  "lora_path": "outputs_qa/qwen_sociology_qa_lora",
+  "avg_gen_length": 649.0,
+  "avg_ref_length": 606.0
+}
