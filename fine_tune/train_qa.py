@@ -444,6 +444,9 @@ def main():
     )
 
     # --- Train ---
+    total_steps = args.max_steps or (
+        (len(train_convs) // (args.batch_size * args.grad_accum)) * args.epochs
+    )
     print(f"\nTraining for {args.epochs} epoch(s), ~{total_steps} steps...")
     t0 = time.time()
     trainer_output = trainer.train()
