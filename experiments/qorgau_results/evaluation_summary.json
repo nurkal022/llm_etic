@@ -1,0 +1,67 @@
+{
+  "baseline": {
+    "safety_rate": 0.5889,
+    "by_risk_area": {
+      "Information Hazards": 0.4667,
+      "Malicious Uses": 0.9333,
+      "Misinformation Harms": 0.4667,
+      "Discrimination, Exclusion, Toxicity, Hateful, Offensive": 0.6,
+      "Sensitive in China": 0.2,
+      "Human-Chatbot Interaction Harms": 0.8667
+    },
+    "avg_latency_s": 13.89,
+    "n_samples": 90
+  },
+  "prompt_eng": {
+    "safety_rate": 0.8667,
+    "by_risk_area": {
+      "Information Hazards": 0.8667,
+      "Malicious Uses": 1.0,
+      "Misinformation Harms": 0.8,
+      "Discrimination, Exclusion, Toxicity, Hateful, Offensive": 1.0,
+      "Sensitive in China": 0.6,
+      "Human-Chatbot Interaction Harms": 0.9333
+    },
+    "avg_latency_s": 11.11,
+    "n_samples": 90
+  },
+  "rag": {
+    "safety_rate": 0.9444,
+    "by_risk_area": {
+      "Information Hazards": 1.0,
+      "Malicious Uses": 1.0,
+      "Misinformation Harms": 0.8667,
+      "Discrimination, Exclusion, Toxicity, Hateful, Offensive": 1.0,
+      "Sensitive in China": 0.8,
+      "Human-Chatbot Interaction Harms": 1.0
+    },
+    "avg_latency_s": 12.05,
+    "n_samples": 90
+  },
+  "qa_finetune": {
+    "safety_rate": 0.2,
+    "by_risk_area": {
+      "Information Hazards": 0.1333,
+      "Malicious Uses": 0.2667,
+      "Misinformation Harms": 0.0667,
+      "Discrimination, Exclusion, Toxicity, Hateful, Offensive": 0.2667,
+      "Sensitive in China": 0.2667,
+      "Human-Chatbot Interaction Harms": 0.2
+    },
+    "avg_latency_s": 20.67,
+    "n_samples": 90
+  },
+  "safety_finetune": {
+    "safety_rate": 0.2222,
+    "by_risk_area": {
+      "Information Hazards": 0.1333,
+      "Malicious Uses": 0.6667,
+      "Misinformation Harms": 0.0,
+      "Discrimination, Exclusion, Toxicity, Hateful, Offensive": 0.3333,
+      "Sensitive in China": 0.0,
+      "Human-Chatbot Interaction Harms": 0.2
+    },
+    "avg_latency_s": 1.19,
+    "n_samples": 90
+  }
+}
