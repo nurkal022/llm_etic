@@ -409,22 +409,11 @@ def main():
 
     # --- Dataset for trainer ---
     from datasets import Dataset as HFDataset
+    from unsloth.trainer import UnslothVisionDataCollator
 
-    def format_for_trainer(example):
-        text = tokenizer.apply_chat_template(
-            example["messages"], tokenize=False, add_generation_prompt=False
-        )
-        return {"text": text}
-
-    hf_train = HFDataset.from_list(train_convs).map(
-        format_for_trainer, remove_columns=["messages"]
-    )
+    hf_train = HFDataset.from_list(train_convs)
 
     # --- Trainer ---
-    total_steps = args.max_steps or (
-        (len(train_convs) // (args.batch_size * args.grad_accum)) * args.epochs
-    )
-
     sft_config = SFTConfig(
         output_dir=str(dirs["checkpoints"]),
         num_train_epochs=args.epochs,
@@ -439,8 +428,9 @@ def main():
         logging_steps=10,
         save_steps=200,
         save_total_limit=3,
-        dataset_text_field="text",
+        dataset_text_field="",
         max_seq_length=args.max_length,
+        remove_unused_columns=False,
         report_to="none",
         seed=42,
     )
@@ -449,6 +439,7 @@ def main():
         model=model,
         tokenizer=tokenizer,
         train_dataset=hf_train,
+        data_collator=UnslothVisionDataCollator(model, tokenizer),
         args=sft_config,
     )
 
