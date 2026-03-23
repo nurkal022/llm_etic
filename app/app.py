@@ -10,11 +10,10 @@
   http://192.168.0.110:8501
 """
 
-import gc
-import json
 import time
 from pathlib import Path
 
+import requests
 import streamlit as st
 
 # ---------------------------------------------------------------------------
@@ -22,9 +21,9 @@ import streamlit as st
 # ---------------------------------------------------------------------------
 ROOT = Path(__file__).resolve().parent.parent
 
-LORA_SAFETY = str(ROOT / "outputs"    / "qwen_aegis_safety_lora")
-LORA_QA     = str(ROOT / "outputs_qa" / "qwen_sociology_qa_lora")
-KB_PATH     = str(ROOT / "experiments" / "knowledge_base" / "ethics_codes.md")
+KB_PATH      = str(ROOT / "experiments" / "knowledge_base" / "ethics_codes.md")
+OLLAMA_URL   = "http://localhost:11434/api/chat"
+OLLAMA_MODEL = "qwen3.5:4b"
 
 # ---------------------------------------------------------------------------
 # Streamlit беті конфигурациясы
@@ -152,32 +151,6 @@ REFUSAL_KW = [
     "нельзя", "противореч", "cannot", "can't", "refuse", "unethical",
 ]
 
-# ---------------------------------------------------------------------------
-# Модель жүктеу (кэштелген)
-# ---------------------------------------------------------------------------
-@st.cache_resource(show_spinner=False)
-def load_model(method: str):
-    """Модельді жүктеп, кэштейді."""
-    from unsloth import FastVisionModel
-
-    if method == "safety_finetune":
-        model, tokenizer = FastVisionModel.from_pretrained(
-            LORA_SAFETY, load_in_4bit=True
-        )
-    elif method == "qa_finetune":
-        model, tokenizer = FastVisionModel.from_pretrained(
-            LORA_QA, load_in_4bit=True
-        )
-    else:
-        model, tokenizer = FastVisionModel.from_pretrained(
-            "unsloth/Qwen3.5-4B",
-            load_in_4bit=True,
-            use_gradient_checkpointing="unsloth",
-        )
-    FastVisionModel.for_inference(model)
-    return model, tokenizer
-
-
 @st.cache_resource(show_spinner=False)
 def load_retriever():
     """RAG ретривері."""
@@ -206,24 +179,51 @@ def is_refusal(text: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Ollama API шақыру
+# ---------------------------------------------------------------------------
+def _ollama_chat(messages: list, temperature: float, max_tokens: int) -> tuple[str, int]:
+    """Ollama /api/chat эндпоинтіне сұраным жіберіп жауап қайтарады."""
+    payload = {
+        "model":  OLLAMA_MODEL,
+        "messages": messages,
+        "stream": False,
+        "options": {
+            "temperature":      temperature,
+            "top_p":            0.9,
+            "repeat_penalty":   1.1,
+            "num_predict":      max_tokens,
+        },
+    }
+    resp = requests.post(OLLAMA_URL, json=payload, timeout=120)
+    resp.raise_for_status()
+    data = resp.json()
+    text   = data["message"]["content"]
+    tokens = data.get("eval_count", 0)
+    return text, tokens
+
+
+# ---------------------------------------------------------------------------
 # Генерация
 # ---------------------------------------------------------------------------
 def generate(method: str, user_prompt: str, temperature: float, max_tokens: int) -> dict:
-    import torch
-
     t0 = time.time()
-    model, tokenizer = load_model(method)
 
     if method == "baseline":
         messages = [
-            {"role": "system", "content": [{"type": "text", "text": SYSTEM_BASE}]},
-            {"role": "user",   "content": [{"type": "text", "text": user_prompt}]},
+            {"role": "system", "content": SYSTEM_BASE},
+            {"role": "user",   "content": user_prompt},
         ]
+        raw, tokens = _ollama_chat(messages, temperature, max_tokens)
+        response, classifier_out, refused = raw, None, is_refusal(raw)
+
     elif method == "prompt_eng":
         messages = [
-            {"role": "system", "content": [{"type": "text", "text": SYSTEM_ETHICS}]},
-            {"role": "user",   "content": [{"type": "text", "text": user_prompt}]},
+            {"role": "system", "content": SYSTEM_ETHICS},
+            {"role": "user",   "content": user_prompt},
         ]
+        raw, tokens = _ollama_chat(messages, temperature, max_tokens)
+        response, classifier_out, refused = raw, None, is_refusal(raw)
+
     elif method == "rag":
         chunks  = load_retriever() or []
         context = retrieve(user_prompt, chunks)
@@ -237,54 +237,33 @@ def generate(method: str, user_prompt: str, temperature: float, max_tokens: int)
             if context else user_prompt
         )
         messages = [
-            {"role": "system", "content": [{"type": "text", "text": rag_sys}]},
-            {"role": "user",   "content": [{"type": "text", "text": rag_usr}]},
+            {"role": "system", "content": rag_sys},
+            {"role": "user",   "content": rag_usr},
         ]
+        raw, tokens = _ollama_chat(messages, temperature, max_tokens)
+        response, classifier_out, refused = raw, None, is_refusal(raw)
+
     elif method == "qa_finetune":
         messages = [
-            {"role": "system", "content": [{"type": "text", "text": SYSTEM_BASE}]},
-            {"role": "user",   "content": [{"type": "text", "text": user_prompt}]},
+            {"role": "system", "content": SYSTEM_BASE},
+            {"role": "user",   "content": user_prompt},
         ]
+        raw, tokens = _ollama_chat(messages, temperature, max_tokens)
+        response, classifier_out, refused = raw, None, is_refusal(raw)
+
     else:  # safety_finetune
         clf_user = f"{CLASSIFIER_INSTRUCTION}\n\n[User Prompt]:\n{user_prompt}"
-        messages = [
-            {"role": "user", "content": [{"type": "text", "text": clf_user}]},
-        ]
-
-    input_text = tokenizer.apply_chat_template(messages, add_generation_prompt=True)
-    inputs = tokenizer(None, input_text, add_special_tokens=False, return_tensors="pt").to("cuda")
-
-    with torch.no_grad():
-        gen_max = 64 if method == "safety_finetune" else max_tokens
-        output = model.generate(
-            **inputs,
-            max_new_tokens=gen_max,
-            temperature=temperature,
-            top_p=0.9,
-            repetition_penalty=1.1,
-            use_cache=True,
-            do_sample=(temperature > 0.01),
-        )
-
-    raw = tokenizer.decode(output[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
-
-    # Safety fine-tune: жіктеуіш → бас тарту
-    if method == "safety_finetune":
+        messages = [{"role": "user", "content": clf_user}]
+        raw, tokens = _ollama_chat(messages, 0.1, 64)
+        classifier_out = raw
         if "unsafe" in raw.lower():
-            response       = STANDARD_REFUSAL
-            classifier_out = raw
-            refused        = True
+            response, refused = STANDARD_REFUSAL, True
         else:
-            response       = (
+            response = (
                 "Контент қауіпсіз деп жіктелді. "
                 "Толық жауап үшін басқа әдісті таңдаңыз."
             )
-            classifier_out = raw
-            refused        = False
-    else:
-        response       = raw
-        classifier_out = None
-        refused        = is_refusal(raw)
+            refused = False
 
     latency = round(time.time() - t0, 2)
     return {
@@ -292,7 +271,7 @@ def generate(method: str, user_prompt: str, temperature: float, max_tokens: int)
         "classifier_out": classifier_out,
         "refused":        refused,
         "latency":        latency,
-        "tokens":         output.shape[1] - inputs["input_ids"].shape[1],
+        "tokens":         tokens,
     }
 
 
