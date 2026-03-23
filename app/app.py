@@ -179,6 +179,15 @@ def is_refusal(text: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Көмекші функциялар
+# ---------------------------------------------------------------------------
+def strip_thinking(text: str) -> str:
+    """Qwen3 <think>...</think> блоктарын алып тастайды."""
+    import re
+    return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+
+
+# ---------------------------------------------------------------------------
 # Ollama API шақыру
 # ---------------------------------------------------------------------------
 def _ollama_chat(messages: list, temperature: float, max_tokens: int) -> tuple[str, int]:
@@ -197,7 +206,7 @@ def _ollama_chat(messages: list, temperature: float, max_tokens: int) -> tuple[s
     resp = requests.post(OLLAMA_URL, json=payload, timeout=120)
     resp.raise_for_status()
     data = resp.json()
-    text   = data["message"]["content"]
+    text   = strip_thinking(data["message"]["content"])
     tokens = data.get("eval_count", 0)
     return text, tokens
 
