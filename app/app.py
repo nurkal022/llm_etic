@@ -152,14 +152,6 @@ REFUSAL_KW = [
     "нельзя", "противореч", "cannot", "can't", "refuse", "unethical",
 ]
 
-QORGAU_RESULTS = {
-    "baseline":        0.589,
-    "prompt_eng":      0.867,
-    "rag":             0.944,
-    "qa_finetune":     0.200,
-    "safety_finetune": 0.222,
-}
-
 # ---------------------------------------------------------------------------
 # Модель жүктеу (кэштелген)
 # ---------------------------------------------------------------------------
@@ -329,20 +321,8 @@ with st.sidebar:
     max_tokens  = st.slider("Максималды токендер", 64, 1024, 512, 32)
 
     st.divider()
-    st.subheader("📊 Qorgau нәтижелері")
-    for m, rate in sorted(QORGAU_RESULTS.items(), key=lambda x: -x[1]):
-        color = "#1a5632" if rate >= 0.8 else "#e67e22" if rate >= 0.5 else "#c0392b"
-        active = "**" if m == selected_key else ""
-        st.markdown(
-            f"{active}{METHODS[m]}{active} — "
-            f"<span style='color:{color};font-weight:600'>{rate:.1%}</span>",
-            unsafe_allow_html=True,
-        )
-
-    st.divider()
     if st.button("🗑️ Чатты тазарту", use_container_width=True):
         st.session_state.messages = []
-        st.session_state.stats    = {"total": 0, "refused": 0, "total_latency": 0.0}
         st.rerun()
 
     st.caption("📁 [GitHub](https://github.com/nurkal022/llm_etic)")
@@ -359,44 +339,6 @@ with col_badge:
         f"<div style='padding-top:18px'>"
         f"<span class='method-badge {BADGE_CLASS[selected_key]}'>"
         f"{METHODS[selected_key]}</span></div>",
-        unsafe_allow_html=True,
-    )
-
-# Метрикалар жолағы
-if "stats" not in st.session_state:
-    st.session_state.stats = {"total": 0, "refused": 0, "total_latency": 0.0}
-
-s = st.session_state.stats
-c1, c2, c3, c4 = st.columns(4)
-with c1:
-    st.markdown(
-        f"<div class='metric-box'>"
-        f"<div class='value'>{s['total']}</div>"
-        f"<div class='label'>Барлық сұраным</div></div>",
-        unsafe_allow_html=True,
-    )
-with c2:
-    refused_pct = (s["refused"] / s["total"] * 100) if s["total"] else 0
-    st.markdown(
-        f"<div class='metric-box'>"
-        f"<div class='value' style='color:#c0392b'>{s['refused']}</div>"
-        f"<div class='label'>Бас тарту ({refused_pct:.0f}%)</div></div>",
-        unsafe_allow_html=True,
-    )
-with c3:
-    answered = s["total"] - s["refused"]
-    st.markdown(
-        f"<div class='metric-box'>"
-        f"<div class='value' style='color:#1a5632'>{answered}</div>"
-        f"<div class='label'>Жауап берілді</div></div>",
-        unsafe_allow_html=True,
-    )
-with c4:
-    avg_lat = (s["total_latency"] / s["total"]) if s["total"] else 0.0
-    st.markdown(
-        f"<div class='metric-box'>"
-        f"<div class='value'>{avg_lat:.1f}с</div>"
-        f"<div class='label'>Орт. кідіріс</div></div>",
         unsafe_allow_html=True,
     )
 
@@ -508,8 +450,4 @@ if user_input or prefill:
         },
     })
 
-    # Статистиканы жаңарту
-    st.session_state.stats["total"]         += 1
-    st.session_state.stats["refused"]       += int(result["refused"])
-    st.session_state.stats["total_latency"] += result["latency"]
     st.rerun()
